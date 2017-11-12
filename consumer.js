@@ -2,10 +2,10 @@
 
 const DEBUG = process.env.DEBUG || true                     // turn on console logging
 const FREQ = 1                                              // Hz
-const MQTT_TOPIC = process.env.MQTT_TOPIC                   // topic on to which to publish
+const MQTT_TOPIC = process.env.MQTT_TOPIC || "/flight/data"// topic on to which to publish
 const SIM_DATA_IPADDRESS = process.env.SIM_DATA_IPADDRESS   // IP address of the simulator data
-const REGION = process.env.REGION                           // AWS region for the kinesis
-const STREAM_NAME = process.env.STREAM_NAME                 // kinesis stream name
+const REGION = process.env.REGION || "ap-southeast-2"                           // AWS region for the kinesis
+const STREAM_NAME = process.env.STREAM_NAME || "simFlightData"                 // kinesis stream name
 const STATS_INTERVAL = 3000;
 
 // -------------------------- DO NOT EDIT BELOW THIS LINE --------------------------
