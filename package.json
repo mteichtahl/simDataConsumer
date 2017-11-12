@@ -1,0 +1,14 @@
+{
+  "name": "simDataProducer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Marc Teichtahl <teichtah@amazon.com>",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.149.0",
+    "mqtt": "^2.14.0"
+  },
+  "scripts": {
+    "run": "node ./consumer.js"
+  }
+}
