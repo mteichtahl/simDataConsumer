@@ -66,7 +66,7 @@ client.on('connect', () => {
 
 client.on('message', (topic, message) => {
     var msgJSON = message.toString();
-    kinesisClient.write(msgJSON, function(ret){
+    kinesisClient.write(msgJSON, totalPutItemCount,function(ret){
         putItemCount++
         totalPutItemCount++
     })
