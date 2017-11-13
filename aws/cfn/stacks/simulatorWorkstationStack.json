@@ -150,15 +150,12 @@
             "Fn::Join": ["", [
               "#!/bin/bash\n",
               "yum -y update\n",
-              "yum -y install git jq\n",
-              "curl -L https://git.io/n-install | N_PREFIX=/usr/local/n bash -s -- -y 6.10.0\n",
-              "tail -1 /root/.bashrc | sed 's/$HOME//g' >> /etc/bashrc\n",
-              "sh /etc/bashrc\n",
-              "npm install -g forever mqtt\n",
+              "curl --silent --location https://rpm.nodesource.com/setup_6.x | sudo bash -\n",
+              "yum install -y nodejs git jq forever mqtt\n",
               "wget https://reinvent-abd322-workshop.s3.amazonaws.com/tagsToEnv.sh\n",
               "sh ./tagsToEnv.sh > /etc/environment\n",
               "git clone https://github.com/mteichtahl/simDataConsumer.git\n",
-              "cd simDataConsumer\n",
+              "cd /simDataConsumer\n",
               "npm install\n"
             ]]
           }
