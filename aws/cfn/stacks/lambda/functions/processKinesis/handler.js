@@ -1,8 +1,6 @@
 var AWS = require('aws-sdk');
 var _ = require('lodash');
 var base64 = require('base-64');
-var AWS = require('aws-sdk');
-var s3 = new AWS.S3();
 
 var cloudwatch = new AWS.CloudWatch();
 var dynamodb = new AWS.DynamoDB();
@@ -80,21 +78,21 @@ function putCloudwatchMetric(metricName, dimName, dimValue, ts, value) {
 exports.index = function(event, context, callback) {
   // find the number of records being given to us by kinesis
   var recordCount = event.Records.length;
+  console.log(recordCount);
 
   // iterate through the records
-  for (i = 0; i < recordCount; i++) {
+ for (i = 0; i < recordCount; i++) {
     // get the kinesis payload
-    var kinesis = event.Records[i].kinesis;
+   var flightData = event.Records[i].kinesis;
 
     // convert from base64, clean up and "funny" characters and parse into
     // JSON
-    console.log(kinesis.data);
-    console.log(base64.decode(kinesis.data));
+    console.log(base64.decode(flightData.data));
     // data = JSON.parse(cleanJSONString(base64.decode(kinesis.data)));
 
     // putCloudwatchMetric(data.s, data.s, 'On/Off', parseInt(data.ts), data.val);
     // writeToDynamo(data.s, data.val, data.u, data.d);
-  }
+ } 
 
 
   callback(null, 'Complete');
