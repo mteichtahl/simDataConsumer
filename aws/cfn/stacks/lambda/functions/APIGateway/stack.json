@@ -1,34 +1,28 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda Function - ProcessKinesis",
   "Parameters": {
     "EnvironmentName": {
       "Description": "The string that will be prefixed to each instance name",
       "Type": "String",
       "MinLength": "3",
-      "MaxLength": "10",
-      "Default": "simData",
-      "AllowedPattern": "[a-z0-9]*",
+      "MaxLength": "32",
+      "Default": "APIGatewayLambda",
+      "AllowedPattern": "[a-zA-Z0-9]*",
       "ConstraintDescription": "Environment names must be 3-6 characters and contain only a-z and 0-9."
     },
-    "ProcessKinesisFunctionKey": {
+    "LambdaFunctionKey": {
       "Type": "String",
-      "Default": "processKinesis.zip",
+      "Default": "APIGateway.zip",
       "Description": "Lambda function used to process kinesis stream data"
     },
     "lambdabucket": {
       "Type": "String",
       "Default": "reinvent-abd322-workshop",
       "Description": "Lambda function bucket"
-    },
-    "KinesisStreamARN": {
-      "Type": "String",
-      "Default": "<KINESIS_STREAM_ARN>",
-      "Description": "ARN of the Kinesis stream"
     }
   },
   "Resources": {
-    "ProcessKinesisFunction": {
+    "LambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Tags": [{
@@ -53,7 +47,7 @@
             "Ref": "lambdabucket"
           },
           "S3Key": {
-            "Ref": "ProcessKinesisFunctionKey"
+            "Ref": "LambdaFunctionKey"
           }
         },
         "Environment": {},
@@ -62,37 +56,7 @@
         "MemorySize": "1024"
       }
     },
-    "EventSourceMapping": {
-      "Type": "AWS::Lambda::EventSourceMapping",
-      "Properties": {
-        "EventSourceArn": {
-          "Ref": "KinesisStreamARN"
-        },
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ProcessKinesisFunction",
-            "Arn"
-          ]
-        },
-        "StartingPosition": "TRIM_HORIZON"
-      }
-    },
-    "LambdaPermission": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "Action": "lambda:invokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ProcessKinesisFunction",
-            "Arn"
-          ]
-        },
-        "Principal": "kinesis.amazonaws.com",
-        "SourceArn": {
-          "Ref": "KinesisStreamARN"
-        }
-      }
-    },
+
     "LambdaExecutionRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -130,47 +94,22 @@
           }
         }]
       }
-    },
-    "DDBTable": {
-      "Type": "AWS::DynamoDB::Table",
-      "Properties": {
-        "TableName": "simDataStore",
-        "AttributeDefinitions": [{
-          "AttributeName": "id",
-          "AttributeType": "S"
-        }],
-        "KeySchema": [{
-          "AttributeName": "id",
-          "KeyType": "HASH"
-        }],
-        "ProvisionedThroughput": {
-          "ReadCapacityUnits": 5,
-          "WriteCapacityUnits": 15
-        }
-
-      }
     }
   },
   "Outputs": {
     "ProcessKinesisFunctionARN": {
       "Value": {
         "Fn::GetAtt": [
-          "ProcessKinesisFunction",
+          "LambdaFunction",
           "Arn"
         ]
       },
       "Description": "Lambda function used by API gateway to get a certification ARN",
       "Export": {
         "Name": {
-          "Fn::Sub": "${AWS::StackName}-ProcessKinesisFunctionARN"
+          "Fn::Sub": "${AWS::StackName}-LambdaFunctionAPI"
         }
       }
-    },
-    "DDBTable": {
-      "Value": {
-        "Ref": "DDBTable"
-      },
-      "Description": "DDB Table for flight stats"
     }
   }
 }
