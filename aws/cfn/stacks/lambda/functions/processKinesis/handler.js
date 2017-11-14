@@ -4,6 +4,9 @@ var base64 = require('base-64');
 
 var cloudwatch = new AWS.CloudWatch();
 var dynamodb = new AWS.DynamoDB();
+var firehose = new AWS.Firehose({region: 'ap-northeast-1'})
+
+                   const WRITE_TO_FIREHOSE = false;
 
 /**
  * cleanJSONString
@@ -80,6 +83,19 @@ function putCloudwatchMetric(metricName, dimName, dimValue, ts, value) {
   });
 }
 
+function writeToFirehose(JSONdata, cb) {
+  var dataString = JSON.stringify(JSONdata);
+
+  var params = {
+    DeliveryStreamName: 'test',
+    Record: {Data: dataString}
+  }
+
+               firehose.putRecord(params, function(err, data) {
+                 cb(err, data);
+               })
+}
+
 /**
  * Main lambda handler and entry point
  */
@@ -96,13 +112,20 @@ exports.index = function(event, context, callback) {
     // convert from base64, clean up and "funny" characters and parse into
     // JSON
     try {
-      var JSONdata = JSON.parse(cleanJSONString(base64.decode(flightData.data)));
-      writeToDynamo(JSONdata, function(ret) {
-        console.log('done');
-      });
+      var JSONdata =
+          JSON.parse(cleanJSONString(base64.decode(flightData.data)));
+      writeToDynamo(JSONdata, function(ret) {});
+
+      if (WRITE_TO_FIREHOSE) {
+        writeToFirehose(JSONdata, function(err, data) {
+          console.log(err, data)
+        })
+      }
     } catch (err) {
       continue;
     }
+
+
 
     //
     // console.log(cleanJSONString(base64.decode(flightData.data)));

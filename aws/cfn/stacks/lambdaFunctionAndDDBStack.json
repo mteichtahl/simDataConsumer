@@ -7,7 +7,7 @@
       "MinLength": "3",
       "MaxLength": "10",
       "Default": "simData",
-      "AllowedPattern": "[a-z0-9]*",
+      "AllowedPattern": "[a-zA-Z0-9]*",
       "ConstraintDescription": "Environment names must be 3-6 characters and contain only a-z and 0-9."
     },
     "ProcessKinesisFunctionKey": {
@@ -60,21 +60,6 @@
         "MemorySize": "1024"
       }
     },
-    "EventSourceMapping": {
-      "Type": "AWS::Lambda::EventSourceMapping",
-      "Properties": {
-        "EventSourceArn": {
-          "Ref":"KinesisStreamARN"
-        },
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ProcessKinesisFunction",
-            "Arn"
-          ]
-        },
-        "StartingPosition": "TRIM_HORIZON"
-      }
-    },
     "LambdaPermission": {
       "Type": "AWS::Lambda::Permission",
       "Properties": {
@@ -106,7 +91,8 @@
             "Statement": [
                 { "Effect": "Allow", "Action": ["logs:*"], "Resource": "arn:aws:logs:*:*:*" },
                 { "Effect": "Allow", "Action": ["kinesis:*"], "Resource": "*" },
-                { "Effect": "Allow", "Action": ["dynamodb:PutItem"], "Resource": "*" }
+                { "Effect": "Allow", "Action": ["dynamodb:PutItem"], "Resource": "*" },
+                { "Effect": "Allow", "Action": ["firehose:PutRecord"], "Resource": "*" }
                 ]
           }
         }]
@@ -130,7 +116,7 @@
         ],
         "ProvisionedThroughput": {
             "ReadCapacityUnits": 5,
-            "WriteCapacityUnits": 15
+            "WriteCapacityUnits": 50
             }
 
         }
