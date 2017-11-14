@@ -28,10 +28,9 @@ exports.index = function (event, context, callback) {
       statusCode = 200
     }
 
-    console.log(retVal)
-
     callback(null, {
       statusCode: statusCode,
+      headers: { "Access-Control-Allow-Origin": "*" },
       body: retVal
     })
   })
