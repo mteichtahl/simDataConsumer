@@ -156,6 +156,7 @@
               "sh ./tagsToEnv.sh > /etc/environment\n",
               "npm install -g mqtt\n",
               "git clone https://github.com/mteichtahl/simDataConsumer.git\n",
+              "git clone https://github.com/mteichtahl/simDataUI.git\n",
               "cd /simDataConsumer\n",
               "npm install\n"
             ]]
