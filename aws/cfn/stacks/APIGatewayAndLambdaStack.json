@@ -1,274 +1,382 @@
 {
-  "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "SimData Lambda and API Gateway",
-  "Parameters": {
-    "EnvironmentName": {
-      "Description": "The string that will be prefixed to each instance name",
-      "Type": "String",
-      "MinLength": "3",
-      "MaxLength": "32",
-      "Default": "simDataAPIGateway",
-      "AllowedPattern": "[a-zA-Z0-9]*",
-      "ConstraintDescription": "Environment names must be 3-16 characters and contain only a-z and 0-9."
-    },
-    "LambdaFunctionKey": {
-      "Type": "String",
-      "Default": "APIGateway.zip",
-      "Description": "Lambda function used to process kinesis stream data"
-    },
-    "lambdabucket": {
-      "Type": "String",
-      "Default": "reinvent-abd322-workshop",
-      "Description": "Lambda function bucket"
-    }
-  },
-  "Resources": {
-    "LambdaFunction": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Tags": [{
-            "Key": "Environment",
-            "Value": {
-              "Ref": "EnvironmentName"
-            }
-          },
-          {
-            "Key": "Name",
-            "Value": {
-              "Ref": "EnvironmentName"
-            }
-          }
-        ],
-        "Handler": "handler.index",
-        "Role": {
-          "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "SimData Lambda and API Gateway",
+    "Parameters": {
+        "EnvironmentName": {
+            "Description": "The string that will be prefixed to each instance name",
+            "Type": "String",
+            "MinLength": "3",
+            "MaxLength": "32",
+            "Default": "simDataAPIGateway",
+            "AllowedPattern": "[a-zA-Z0-9]*",
+            "ConstraintDescription": "Environment names must be 3-16 characters and contain only a-z and 0-9."
         },
-        "Code": {
-          "S3Bucket": {
-            "Ref": "lambdabucket"
-          },
-          "S3Key": {
-            "Ref": "LambdaFunctionKey"
-          }
+        "LambdaFunctionKey": {
+            "Type": "String",
+            "Default": "APIGateway.zip",
+            "Description": "Lambda function used to process kinesis stream data"
         },
-        "Environment": {},
-        "Runtime": "nodejs6.10",
-        "Timeout": "120",
-        "MemorySize": "1024"
-      }
+        "lambdabucket": {
+            "Type": "String",
+            "Default": "reinvent-abd322-workshop",
+            "Description": "Lambda function bucket"
+        }
     },
-    "LambdaExecutionRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-              "Effect": "Allow",
-              "Principal": {
-                "Service": ["lambda.amazonaws.com"]
-              },
-              "Action": ["sts:AssumeRole"]
+    "Resources": {
+        "LambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Environment",
+                        "Value": {
+                            "Ref": "EnvironmentName"
+                        }
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Ref": "EnvironmentName"
+                        }
+                    }
+                ],
+                "Handler": "handler.index",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "S3Bucket": {
+                        "Ref": "lambdabucket"
+                    },
+                    "S3Key": {
+                        "Ref": "LambdaFunctionKey"
+                    }
+                },
+                "Environment": {},
+                "Runtime": "nodejs6.10",
+                "Timeout": "120",
+                "MemorySize": "1024"
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "apigateway.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "AllowSimLambda",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:*"
+                                    ],
+                                    "Resource": "arn:aws:logs:*:*:*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "dynamodb:*"
+                                    ],
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "apigateway:*"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "LambdaFunctionPermission": {
+            "DependsOn": [
+                "LambdaFunction"
+            ],
+            "Properties": {
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "LambdaFunction",
+                        "Arn"
+                    ]
+                },
+                "Principal": "apigateway.amazonaws.com",
+                "Action": "lambda:InvokeFunction",
+                "SourceArn": {
+                    "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*"
+                }
             },
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": ["apigateway.amazonaws.com"]
-              },
-              "Action": ["sts:AssumeRole"]
-            }
-          ]
+            "Type": "AWS::Lambda::Permission"
         },
-        "Path": "/",
-        "Policies": [{
-          "PolicyName": "AllowSimLambda",
-          "PolicyDocument": {
-            "Version": "2012-10-17",
-            "Statement": [{
-                "Effect": "Allow",
-                "Action": ["logs:*"],
-                "Resource": "arn:aws:logs:*:*:*"
-              },
-              {
-                "Effect": "Allow",
-                "Action": ["dynamodb:*"],
-                "Resource": "*"
-              },
-              {
-                "Effect": "Allow",
-                "Action": ["apigateway:*"],
-                "Resource": "*"
-              }
+        "RestApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Properties": {
+                "Name": "SimData API Gateway"
+            }
+        },
+        "DataModel": {
+            "Type": "AWS::ApiGateway::Model",
+            "Properties": {
+                "ContentType": "application/json",
+                "Name": "Data",
+                "RestApiId": {
+                    "Ref": "RestApi"
+                },
+                "Schema": {
+                    "$schema": "http://json-schema.org/draft-04/schema#",
+                    "title": "Data",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "ts": {
+                            "type": "string"
+                        },
+                        "sts": {
+                            "type": "string"
+                        },
+                        "airspeed": {
+                            "type": "string"
+                        },
+                        "heading": {
+                            "type": "string"
+                        },
+                        "lat": {
+                            "type": "string"
+                        },
+                        "lng": {
+                            "type": "string"
+                        },
+                        "pitch": {
+                            "type": "string"
+                        },
+                        "roll": {
+                            "type": "string"
+                        },
+                        "yaw": {
+                            "type": "string"
+                        },
+                        "vspeed": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "DataResource": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "RestApi"
+                },
+                "ParentId": {
+                    "Fn::GetAtt": [
+                        "RestApi",
+                        "RootResourceId"
+                    ]
+                },
+                "PathPart": "data"
+            }
+        },
+        "DataGetMethod": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "RestApi"
+                },
+                "ResourceId": {
+                    "Ref": "DataResource"
+                },
+                "HttpMethod": "GET",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                    "Type": "AWS",
+                    "IntegrationHttpMethod": "POST",
+                    "Uri": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "arn:aws:apigateway:",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                ":lambda:path/2015-03-31/functions/",
+                                {
+                                    "Fn::GetAtt": [
+                                        "LambdaFunction",
+                                        "Arn"
+                                    ]
+                                },
+                                "/invocations"
+                            ]
+                        ]
+                    },
+                    "IntegrationResponses": [
+                        {
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            },
+                            "ResponseTemplates": {
+                                "application/json": "$input.json('$.body')"
+                            },
+                            "StatusCode": 200
+                        },
+                        {
+                            "SelectionPattern": "^not found.*",
+                            "ResponseTemplates": {
+                                "application/json": "{}"
+                            },
+                            "StatusCode": 404
+                        }
+                    ],
+                    "PassthroughBehavior": "WHEN_NO_TEMPLATES"
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseModels": {
+                            "application/json": {
+                                "Ref": "DataModel"
+                            }
+                        },
+                         "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": 200
+                    },
+                    {
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        },
+                        "StatusCode": 404
+                    }
+                ]
+            }
+        },
+        "OptionsMethod": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "AuthorizationType": "NONE",
+                "ApiKeyRequired" : false,
+                "RestApiId": {
+                    "Ref": "RestApi"
+                },
+                "ResourceId": {
+                    "Ref": "DataResource"
+                },
+                "HttpMethod": "OPTIONS",
+                "Integration": {
+                    "IntegrationResponses": [
+                        {
+                            "StatusCode": 200,
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            },
+                            "ResponseTemplates": {
+                                "application/json": ""
+                            }
+                        }
+                    ],
+                    "PassthroughBehavior": "NEVER",
+                    "RequestTemplates": {
+                        "application/json": "{\"statusCode\": 200}"
+                    },
+                    "Type": "MOCK"
+                },
+                "MethodResponses": [
+                    {
+                        "StatusCode": 200,
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        },
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": false,
+                            "method.response.header.Access-Control-Allow-Methods": false,
+                            "method.response.header.Access-Control-Allow-Origin": false
+                        }
+                    }
+                ]
+            }
+        },
+        "RestApiDeployment": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "RestApi"
+                },
+                "StageName": "v1"
+            },
+            "DependsOn": [
+                "DataGetMethod",
+                "OptionsMethod"
             ]
-          }
-        }]
-      }
-    },
-    "LambdaFunctionPermission": {
-      "DependsOn": [
-        "LambdaFunction"
-      ],
-      "Properties": {
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "LambdaFunction",
-            "Arn"
-          ]
-        },
-        "Principal": "apigateway.amazonaws.com",
-        "Action": "lambda:InvokeFunction",
-        "SourceArn": {
-          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*"
         }
-      },
-      "Type": "AWS::Lambda::Permission"
     },
-    "RestApi": {
-      "Type": "AWS::ApiGateway::RestApi",
-      "Properties": {
-        "Name": "SimData API Gateway"
-      }
-    },
-    "DataModel": {
-      "Type": "AWS::ApiGateway::Model",
-      "Properties": {
-        "ContentType": "application/json",
-        "Name": "Data",
-        "RestApiId": {
-          "Ref": "RestApi"
-        },
-        "Schema": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "title": "Data",
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "ts": {
-              "type": "string"
-            },
-            "sts": {
-              "type": "string"
-            },
-            "airspeed": {
-              "type": "string"
-            },
-            "heading": {
-              "type": "string"
-            },
-            "lat": {
-              "type": "string"
-            },
-            "lng": {
-              "type": "string"
-            },
-            "pitch": {
-              "type": "string"
-            },
-            "roll": {
-              "type": "string"
-            },
-            "yaw": {
-              "type": "string"
-            },
-            "vspeed": {
-              "type": "string"
+    "Outputs": {
+        "APIUrl": {
+            "Description": "Root URL of the API gateway",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Ref": "RestApi"
+                        },
+                        ".execute-api.",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        ".amazonaws.com",
+                        "/v1/data"
+                    ]
+                ]
             }
-          }
+        },
+        "ApiId": {
+            "Value": {
+                "Ref": "RestApi"
+            }
         }
-      }
-    },
-    "DataResource": {
-      "Type": "AWS::ApiGateway::Resource",
-      "Properties": {
-        "RestApiId": {
-          "Ref": "RestApi"
-        },
-        "ParentId": {
-          "Fn::GetAtt": ["RestApi", "RootResourceId"]
-        },
-        "PathPart": "data"
-      }
-    },
-    "DataGet": {
-      "Type": "AWS::ApiGateway::Method",
-      "Properties": {
-        "RestApiId": {
-          "Ref": "RestApi"
-        },
-        "ResourceId": {
-          "Ref": "DataResource"
-        },
-        "HttpMethod": "GET",
-        "AuthorizationType": "NONE",
-        "Integration": {
-          "Type": "AWS",
-          "IntegrationHttpMethod": "POST",
-          "Uri": {
-            "Fn::Join": ["", ["arn:aws:apigateway:", {
-              "Ref": "AWS::Region"
-            }, ":lambda:path/2015-03-31/functions/", {
-              "Fn::GetAtt": ["LambdaFunction", "Arn"]
-            }, "/invocations"]]
-          },
-          "IntegrationResponses": [{
-            "ResponseTemplates": {
-              "application/json": "$input.json('$.body')"
-            },
-            "StatusCode": 200
-          }, {
-            "SelectionPattern": "^not found.*",
-            "ResponseTemplates": {
-              "application/json": "{}"
-            },
-            "StatusCode": 404
-          }],
-          "PassthroughBehavior": "WHEN_NO_TEMPLATES"
-        },
-        "MethodResponses": [{
-            "ResponseModels": {
-              "application/json": {
-                "Ref": "DataModel"
-              }
-            },
-            "StatusCode": 200
-          },
-          {
-            "ResponseModels": {
-              "application/json": "Empty"
-            },
-            "StatusCode": 404
-          }
-        ]
-      }
-
-    },
-    "RestApiDeployment": {
-      "Type": "AWS::ApiGateway::Deployment",
-      "Properties": {
-        "RestApiId": {
-          "Ref": "RestApi"
-        },
-        "StageName": "v1"
-      },
-      "DependsOn": ["DataGet"]
     }
-
-  },
-  "Outputs": {
-    "APIUrl": {
-      "Description": "Root URL of the API gateway",
-      "Value": {
-        "Fn::Join": ["", ["https://", {
-          "Ref": "RestApi"
-        }, ".execute-api.", {
-          "Ref": "AWS::Region"
-        }, ".amazonaws.com", "/v1/data"]]
-      }
-    },
-    "ApiId": {
-      "Value": {
-        "Ref": "RestApi"
-      }
-    }
-
-  }
 }
